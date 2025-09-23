@@ -131,31 +131,6 @@ func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
 	return &result, nil
 }
 
-// func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
-// 	var (
-// 		order  models.Order // Inisialisasi sebagai struct, bukan pointer
-// 		result string
-// 		today  = time.Now().Format("20060102")
-// 	)
-// 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
-// 	if err != nil {
-// 		if errors.Is(err, gorm.ErrRecordNotFound) {
-// 			// Jika tabel kosong, buat kode pertama
-// 			result = fmt.Sprintf("ORD-%05d-%s", 1, today)
-// 			return &result, nil
-// 		}
-// 		return nil, err // Return error jika bukan ErrRecordNotFound
-// 	}
-
-// 	// Jika tabel tidak kosong, increment kode
-// 	orderCode := order.Code
-// 	splitOrderName, _ := strconv.Atoi(orderCode[4:9])
-// 	code := splitOrderName + 1
-// 	result = fmt.Sprintf("ORD-%05d-%s", code, today)
-
-// 	return &result, nil
-// }
-
 func (o *OrderRepository) Create(
 	ctx context.Context,
 	tx *gorm.DB,
