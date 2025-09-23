@@ -133,29 +133,25 @@ func (o *OrderRepository) FindByUserID(ctx context.Context, userID string) ([]mo
 
 func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
 	var (
-		order  models.Order
+		order  models.Order // Inisialisasi sebagai struct, bukan pointer
 		result string
 		today  = time.Now().Format("20060102")
 	)
-
 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errWrap.WrapError(errConstant.ErrSQLError)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Jika tabel kosong, buat kode pertama
+			result = fmt.Sprintf("ORD-%05d-%s", 1, today)
+			return &result, nil
 		}
-		// tabel kosong -> mulai dari 1
-		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
-		return &result, nil
+		return nil, err // Return error jika bukan ErrRecordNotFound
 	}
 
-	// ada record -> safe substring check
-	if len(order.Code) >= 9 {
-		splitOrderName, _ := strconv.Atoi(order.Code[4:9])
-		code := splitOrderName + 1
-		result = fmt.Sprintf("ORD-%05d-%s", code, today)
-	} else {
-		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
-	}
+	// Jika tabel tidak kosong, increment kode
+	orderCode := order.Code
+	splitOrderName, _ := strconv.Atoi(orderCode[4:9])
+	code := splitOrderName + 1
+	result = fmt.Sprintf("ORD-%05d-%s", code, today)
 
 	return &result, nil
 }
