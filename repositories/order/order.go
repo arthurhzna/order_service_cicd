@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	errWrap "order-service/common/error"
 	errConstant "order-service/constants/error"
 	errOrder "order-service/constants/error/order"
@@ -13,6 +11,9 @@ import (
 	"order-service/domain/models"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type OrderRepository struct {
@@ -105,22 +106,51 @@ func (o *OrderRepository) FindByUserID(ctx context.Context, userID string) ([]mo
 	return orders, nil
 }
 
+// func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
+// 	var (
+// 		order  *models.Order
+// 		result string
+// 		today  = time.Now().Format("20060102")
+// 	)
+// 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
+// 	if err != nil {
+// 		if !errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return nil, nil
+// 		}
+// 	}
+
+// 	if order.ID != 0 {
+// 		orderCode := order.Code
+// 		splitOrderName, _ := strconv.Atoi(orderCode[4:9])
+// 		code := splitOrderName + 1
+// 		result = fmt.Sprintf("ORD-%05d-%s", code, today)
+// 	} else {
+// 		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
+// 	}
+
+// 	return &result, nil
+// }
+
 func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
 	var (
-		order  *models.Order
+		order  models.Order
 		result string
 		today  = time.Now().Format("20060102")
 	)
+
 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, errWrap.WrapError(errConstant.ErrSQLError)
 		}
+		// tabel kosong -> mulai dari 1
+		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
+		return &result, nil
 	}
 
-	if order.ID != 0 {
-		orderCode := order.Code
-		splitOrderName, _ := strconv.Atoi(orderCode[4:9])
+	// ada record -> safe substring check
+	if len(order.Code) >= 9 {
+		splitOrderName, _ := strconv.Atoi(order.Code[4:9])
 		code := splitOrderName + 1
 		result = fmt.Sprintf("ORD-%05d-%s", code, today)
 	} else {
