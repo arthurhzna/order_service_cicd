@@ -106,55 +106,55 @@ func (o *OrderRepository) FindByUserID(ctx context.Context, userID string) ([]mo
 	return orders, nil
 }
 
-// func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
-// 	var (
-// 		order  *models.Order
-// 		result string
-// 		today  = time.Now().Format("20060102")
-// 	)
-// 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
-// 	if err != nil {
-// 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-// 			return nil, nil
-// 		}
-// 	}
-
-// 	if order.ID != 0 {
-// 		orderCode := order.Code
-// 		splitOrderName, _ := strconv.Atoi(orderCode[4:9])
-// 		code := splitOrderName + 1
-// 		result = fmt.Sprintf("ORD-%05d-%s", code, today)
-// 	} else {
-// 		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
-// 	}
-
-// 	return &result, nil
-// }
-
 func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
 	var (
-		order  models.Order // Inisialisasi sebagai struct, bukan pointer
+		order  *models.Order
 		result string
 		today  = time.Now().Format("20060102")
 	)
 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Jika tabel kosong, buat kode pertama
-			result = fmt.Sprintf("ORD-%05d-%s", 1, today)
-			return &result, nil
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
 		}
-		return nil, err // Return error jika bukan ErrRecordNotFound
 	}
 
-	// Jika tabel tidak kosong, increment kode
-	orderCode := order.Code
-	splitOrderName, _ := strconv.Atoi(orderCode[4:9])
-	code := splitOrderName + 1
-	result = fmt.Sprintf("ORD-%05d-%s", code, today)
+	if order.ID != 0 {
+		orderCode := order.Code
+		splitOrderName, _ := strconv.Atoi(orderCode[4:9])
+		code := splitOrderName + 1
+		result = fmt.Sprintf("ORD-%05d-%s", code, today)
+	} else {
+		result = fmt.Sprintf("ORD-%05d-%s", 1, today)
+	}
 
 	return &result, nil
 }
+
+// func (o *OrderRepository) incrementCode(ctx context.Context) (*string, error) {
+// 	var (
+// 		order  models.Order // Inisialisasi sebagai struct, bukan pointer
+// 		result string
+// 		today  = time.Now().Format("20060102")
+// 	)
+// 	err := o.db.WithContext(ctx).Order("id desc").First(&order).Error
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			// Jika tabel kosong, buat kode pertama
+// 			result = fmt.Sprintf("ORD-%05d-%s", 1, today)
+// 			return &result, nil
+// 		}
+// 		return nil, err // Return error jika bukan ErrRecordNotFound
+// 	}
+
+// 	// Jika tabel tidak kosong, increment kode
+// 	orderCode := order.Code
+// 	splitOrderName, _ := strconv.Atoi(orderCode[4:9])
+// 	code := splitOrderName + 1
+// 	result = fmt.Sprintf("ORD-%05d-%s", code, today)
+
+// 	return &result, nil
+// }
 
 func (o *OrderRepository) Create(
 	ctx context.Context,
@@ -162,6 +162,7 @@ func (o *OrderRepository) Create(
 	param *models.Order,
 ) (*models.Order, error) {
 	code, err := o.incrementCode(ctx)
+	fmt.Println("code", *code)
 	if err != nil {
 		return nil, err
 	}
