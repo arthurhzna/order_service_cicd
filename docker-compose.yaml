@@ -2,7 +2,7 @@ name: booking-field-app
 services:
   order-service:
     container_name: order-service 
-    image: arthurhozanna/order-service:14
+    image: arthurhozanna/order-service:16
     ports:
       - "8004:8004"
     env_file:
